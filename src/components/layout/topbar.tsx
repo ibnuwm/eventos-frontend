@@ -1,17 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ModuleId } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/lib/context";
-import { Bell, Zap } from "lucide-react";
+import { Bell, Zap, RefreshCw } from "lucide-react";
 
 interface TopbarProps {
   activeModule: ModuleId;
 }
 
 export function Topbar({ activeModule }: TopbarProps) {
-  const { showToast } = useApp();
+  const { showToast, refreshData, projects, inventory } = useApp();
+  const [syncLoading, setSyncLoading] = useState(false);
 
   const titles: Record<ModuleId, { title: string; subtitle: string }> = {
     dashboard: { title: "Dashboard Overview", subtitle: "Ringkasan operasional proyek event & indikator finansial real-time" },
@@ -49,24 +50,40 @@ export function Topbar({ activeModule }: TopbarProps) {
           <span>WhatsApp API Connected</span>
         </div>
 
-        {/* Quick Action */}
+        {/* Quick Action - Sync DB */}
         <Button
           variant="outline"
           size="sm"
           className="gap-1.5"
-          onClick={() => showToast("⚡ Webhook sinkronisasi database dijalankan.")}
+          disabled={syncLoading}
+          onClick={async () => {
+            setSyncLoading(true);
+            showToast("⚡ Sinkronisasi data dari database...");
+            await refreshData();
+            showToast("✅ Data berhasil disinkronisasi dari server");
+            setSyncLoading(false);
+          }}
         >
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span>Sync DB</span>
+          {syncLoading ? <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+          <span>{syncLoading ? "Sync..." : "Sync DB"}</span>
         </Button>
 
         {/* Notifications */}
         <button
-          onClick={() => showToast("🔔 2 Pemberitahuan baru: 1 persetujuan layout klien & 1 peringatan bentrok kursi.")}
+          onClick={() => {
+            const conflictCount = inventory.filter((i) => i.hasConflict).length;
+            const pendingProjects = projects.filter((p) => p.progressPercentage < 100).length;
+            const notifs: string[] = [];
+            if (conflictCount > 0) notifs.push(`${conflictCount} bentrok inventaris`);
+            if (pendingProjects > 0) notifs.push(`${pendingProjects} proyek berjalan`);
+            showToast(`🔔 ${notifs.length > 0 ? notifs.join(" & ") : "Tidak ada"} pemberitahuan baru`);
+          }}
           className="relative p-2 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          {inventory.some((i) => i.hasConflict) && (
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          )}
         </button>
 
         {/* User Profile Pill */}

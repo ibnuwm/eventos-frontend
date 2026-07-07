@@ -27,7 +27,7 @@ import { StaffView } from "@/components/modules/StaffView";
 
 export default function Home() {
   const [activeModule, setActiveModule] = useState<ModuleId>("dashboard");
-  const { toastMessage } = useApp();
+  const { toastMessage, loading } = useApp();
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
@@ -40,23 +40,31 @@ export default function Home() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-slate-950/90">
           <div className="max-w-7xl mx-auto">
-            {activeModule === "dashboard" && <DashboardView onNavigate={setActiveModule} />}
-            {activeModule === "monopoly" && <Stage2MonopolyView />}
-            {activeModule === "roadmap" && <MarketLeaderRoadmapView />}
-            {activeModule === "improvements" && <ImprovementsHubView onNavigate={setActiveModule} />}
-            {activeModule === "wanative" && <WaNativeView />}
-            {activeModule === "crm" && <CrmView />}
-            {activeModule === "project" && <ProjectView />}
-            {activeModule === "quotation" && <QuotationView />}
-            {activeModule === "budget" && <BudgetView />}
-            {activeModule === "rundown" && <RundownView />}
-            {activeModule === "ai" && <AiView />}
-            {activeModule === "marketplace" && <MarketplaceView />}
-            {activeModule === "inventory" && <InventoryView />}
-            {activeModule === "approval" && <ApprovalView />}
-            {activeModule === "chat" && <ChatView />}
-            {activeModule === "files" && <FilesView />}
-            {activeModule === "staff" && <StaffView />}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center gap-3 text-slate-400 text-sm">
+                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  Memuat data dari server...
+                </div>
+              </div>
+            )}
+            {!loading && activeModule === "dashboard" && <DashboardView onNavigate={setActiveModule} />}
+            {!loading && activeModule === "monopoly" && <Stage2MonopolyView />}
+            {!loading && activeModule === "roadmap" && <MarketLeaderRoadmapView />}
+            {!loading && activeModule === "improvements" && <ImprovementsHubView onNavigate={setActiveModule} />}
+            {!loading && activeModule === "wanative" && <WaNativeView />}
+            {!loading && activeModule === "crm" && <CrmView />}
+            {!loading && activeModule === "project" && <ProjectView />}
+            {!loading && activeModule === "quotation" && <QuotationView />}
+            {!loading && activeModule === "budget" && <BudgetView />}
+            {!loading && activeModule === "rundown" && <RundownView />}
+            {!loading && activeModule === "ai" && <AiView />}
+            {!loading && activeModule === "marketplace" && <MarketplaceView />}
+            {!loading && activeModule === "inventory" && <InventoryView />}
+            {!loading && activeModule === "approval" && <ApprovalView />}
+            {!loading && activeModule === "chat" && <ChatView />}
+            {!loading && activeModule === "files" && <FilesView />}
+            {!loading && activeModule === "staff" && <StaffView />}
           </div>
         </main>
       </div>
