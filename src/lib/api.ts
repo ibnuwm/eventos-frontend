@@ -186,3 +186,55 @@ export async function evaluateSurgeAndWeather(eventDate = "2026-08-14", venueTyp
     body: JSON.stringify({ event_date: eventDate, venue_type: venueType }),
   });
 }
+
+// ============================================================================
+// CLIENT PORTAL TOKEN-BASED
+// ============================================================================
+export async function generatePortalLink(params: {
+  project_id: string;
+  client_name: string;
+  client_whatsapp: string;
+  tenant_id: string;
+}) {
+  return apiFetch("/client-portal/generate-link", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function verifyPortalToken(token: string) {
+  return apiFetch(`/client-portal/token/${token}/verify`);
+}
+
+export async function approvePortalDocument(token: string, documentType: string, clientSignature: string, grandTotal?: number) {
+  return apiFetch(`/client-portal/token/${token}/approve`, {
+    method: "POST",
+    body: JSON.stringify({
+      document_type: documentType,
+      client_signature: clientSignature,
+      grand_total: grandTotal,
+    }),
+  });
+}
+
+// ============================================================================
+// STOREFRONT (Public - No X-Tenant-ID required)
+// ============================================================================
+export async function fetchStorefrontVendors(query = "", category = "All") {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (category !== "All") params.set("category", category);
+  const qs = params.toString();
+  return apiFetch(`/storefront/vendors${qs ? "?" + qs : ""}`);
+}
+
+export async function fetchStorefrontVendor(id: string) {
+  return apiFetch(`/storefront/vendors/${id}`);
+}
+
+// ============================================================================
+// TENANT INFO (Subscription Tier)
+// ============================================================================
+export async function fetchTenantInfo() {
+  return apiFetch("/tenant");
+}

@@ -35,6 +35,7 @@ import {
   sendMessage as apiSendMessage,
   fetchInventoryItems as apiFetchInventory,
   fetchStaffCrews as apiFetchStaff,
+  fetchTenantInfo as apiFetchTenantInfo,
 } from "@/lib/api";
 
 interface AppContextType {
@@ -48,6 +49,7 @@ interface AppContextType {
   staff: StaffCrew[];
   toastMessage: string | null;
   loading: boolean;
+  subscriptionTier: string | null;
   showToast: (msg: string) => void;
   toggleTask: (projectId: string, taskId: string) => void;
   toggleQuoteItem: (itemId: string) => void;
@@ -185,6 +187,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [staff, setStaff] = useState<StaffCrew[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -195,7 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     try {
-      const [leadsRes, projRes, quoteRes, rundownRes, msgRes, invRes, staffRes] = await Promise.all([
+      const [leadsRes, projRes, quoteRes, rundownRes, msgRes, invRes, staffRes, tenantRes] = await Promise.all([
         apiFetchLeads(),
         apiFetchProjects(),
         apiFetchQuotations(),
@@ -203,7 +206,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         apiFetchMessages(),
         apiFetchInventory(),
         apiFetchStaff(),
+        apiFetchTenantInfo(),
       ]);
+
+      if (tenantRes?.data?.subscription_tier) {
+        setSubscriptionTier(tenantRes.data.subscription_tier);
+      }
 
       if (leadsRes?.data) setLeads(leadsRes.data.map(mapApiLead));
       else setLeads(initialLeads as Lead[]);
@@ -385,6 +393,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         staff,
         toastMessage,
         loading,
+        subscriptionTier,
         showToast,
         toggleTask,
         toggleQuoteItem,

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ModuleId } from "@/types";
+import { useApp } from "@/lib/context";
 import {
   LayoutDashboard,
   Users,
@@ -29,7 +30,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeModule, onSelectModule }: SidebarProps) {
-  const navItems: { id: ModuleId; label: string; icon: React.ElementType; badge?: string; isSpecial?: boolean }[] = [
+  const { subscriptionTier } = useApp();
+  const isProOrAbove = subscriptionTier === "pro" || subscriptionTier === "business" || subscriptionTier === "enterprise";
+  const isBusinessOrAbove = subscriptionTier === "business" || subscriptionTier === "enterprise";
+
+  const navItems: { id: ModuleId; label: string; icon: React.ElementType; badge?: string; isSpecial?: boolean; proOnly?: boolean; businessOnly?: boolean }[] = [
     { id: "dashboard", label: "Dashboard Overview", icon: LayoutDashboard },
     { id: "monopoly", label: "🚀 Stage 2 Monopoly King", icon: Rocket, isSpecial: true, badge: "NEW v4.0" },
     { id: "roadmap", label: "👑 Stage 1 Category King", icon: Crown, isSpecial: true, badge: "v3.0" },
@@ -44,10 +49,16 @@ export function Sidebar({ activeModule, onSelectModule }: SidebarProps) {
     { id: "chat", label: "Modul 9: Vendor Chat Hub", icon: MessageSquare },
     { id: "marketplace", label: "Modul 3 & 13: Marketplace", icon: ShoppingBag },
     { id: "inventory", label: "Modul 14: Asset Conflict", icon: AlertTriangle, badge: "⚠️ 1" },
-    { id: "approval", label: "Modul 11: Client Portal", icon: CheckCircle2 },
+    { id: "approval", label: "Modul 11: Client Portal", icon: CheckCircle2, proOnly: true },
     { id: "files", label: "Modul 10: File Storage", icon: FolderOpen },
     { id: "staff", label: "Modul 15: Staff Crew", icon: UserCheck },
   ];
+
+  const visibleItems = navItems.filter((item) => {
+    if (item.proOnly && !isProOrAbove) return false;
+    if (item.businessOnly && !isBusinessOrAbove) return false;
+    return true;
+  });
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0 select-none">
@@ -72,7 +83,7 @@ export function Sidebar({ activeModule, onSelectModule }: SidebarProps) {
         <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
           Monopoly & Core OS Hub
         </div>
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeModule === item.id;
           return (
@@ -123,10 +134,19 @@ export function Sidebar({ activeModule, onSelectModule }: SidebarProps) {
       {/* Tenant Footer Info */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-400">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="font-semibold text-slate-300">Plan: Category Monopoly v4.0</span>
+          <span className="font-semibold text-slate-300">
+            Plan: <span className={subscriptionTier === "basic" ? "text-amber-400" : subscriptionTier === "pro" ? "text-indigo-400" : "text-emerald-400"}>
+              {(subscriptionTier || "pro")?.toUpperCase()}
+            </span>
+          </span>
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         </div>
-        <div className="text-[11px] text-slate-500 truncate">Tenant: Anisa Wedding Planner</div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-slate-500 truncate">Tenant: EventOS Wedding Organizer</span>
+          <a href="/storefront" target="_blank" className="text-[10px] text-indigo-400 hover:text-indigo-300 underline">
+            Storefront ↗
+          </a>
+        </div>
       </div>
     </aside>
   );
