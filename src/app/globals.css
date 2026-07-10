@@ -4,60 +4,205 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 238.7 83.5% 66.7%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-
+    /* Light theme: high contrast, readable */
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 238 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 222 47% 14%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 25% 40%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 14%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 84%;
+    --input: 214 32% 84%;
+    --ring: 238 84% 67%;
     --radius: 0.75rem;
+
+    --brand-50: 238 100% 97%;
+    --brand-100: 238 90% 92%;
+    --brand-200: 238 80% 85%;
+    --brand-300: 238 75% 62%;
+    --brand-400: 238 84% 60%;
+    --brand-500: 238 84% 54%;
+    --brand-600: 238 80% 46%;
+    --brand-700: 238 75% 38%;
+    --brand-800: 238 70% 30%;
+    --brand-900: 238 65% 22%;
+
+    --chart-1: 238 84% 67%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 35 92% 55%;
+    --chart-4: 330 80% 55%;
+    --chart-5: 200 90% 48%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 238 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 238 84% 67%;
+
+    --brand-50: 238 60% 10%;
+    --brand-100: 238 55% 15%;
+    --brand-200: 238 50% 22%;
+    --brand-300: 238 60% 35%;
+    --brand-400: 238 70% 48%;
+    --brand-500: 238 84% 67%;
+    --brand-600: 238 85% 60%;
+    --brand-700: 238 80% 52%;
+    --brand-800: 238 75% 42%;
+    --brand-900: 238 70% 32%;
+
+    --chart-1: 238 84% 67%;
+    --chart-2: 160 84% 50%;
+    --chart-3: 35 92% 65%;
+    --chart-4: 330 80% 60%;
+    --chart-5: 200 90% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-brand-500/30 selection:text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.125rem; }
+
+  p { margin-bottom: 0.5rem; }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-400/60 rounded-lg;
+  }
+
+  /* Improve readability for all text */
+  .text-xs { font-size: 0.8125rem !important; }
+  .text-sm { font-size: 0.9375rem !important; }
+  .text-base { font-size: 1rem !important; }
+  .text-lg { font-size: 1.125rem !important; }
+  .text-xl { font-size: 1.35rem !important; }
+  .text-2xl { font-size: 1.65rem !important; }
+  .text-3xl { font-size: 2rem !important; }
+
+  .text-[10px] { font-size: 0.75rem !important; }
+  .text-[11px] { font-size: 0.8125rem !important; }
+}
+
+@layer components {
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border border-border/50 shadow-lg;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/60 shadow-lg shadow-black/5;
+  }
+
+  .gradient-brand {
+    @apply bg-gradient-to-br from-brand-500 via-brand-600 to-purple-600;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 to-emerald-500 bg-clip-text text-transparent;
+  }
+
+  .neo-glow {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.15), 0 0 60px hsl(var(--primary) / 0.05);
+  }
+
+  .ring-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  @font-face {
+    font-family: "Inter";
+    src: url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
   }
-  body {
-    @apply bg-background text-foreground antialiased selection:bg-indigo-500 selection:text-white;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  @font-face {
+    font-family: "Plus Jakarta Sans";
+    src: url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap");
+  }
+
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+  }
 }

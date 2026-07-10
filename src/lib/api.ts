@@ -27,6 +27,21 @@ async function apiFetch<T = any>(path: string, options?: RequestInit): Promise<T
   }
 }
 
+// Public fetch (no tenant header)
+async function publicFetch<T = any>(path: string, options?: RequestInit): Promise<T | null> {
+  try {
+    const res = await fetch(`${BACKEND_URL}${path}`, {
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      cache: "no-store",
+      ...options,
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 // ============================================================================
 // DASHBOARD
 // ============================================================================
@@ -188,4 +203,145 @@ export async function vendorLogin(whatsapp: string, name: string) {
 }
 export async function vendorDashboard(vendorId: string) {
   return apiFetch(`/vendor/dashboard?vendor_id=${vendorId}`);
+}
+
+// ============================================================================
+// PHASE 1: BLOG CMS
+// ============================================================================
+export async function fetchBlogPosts() { return publicFetch("/blog"); }
+export async function fetchBlogPost(slug: string) { return publicFetch(`/blog/${slug}`); }
+
+// ============================================================================
+// PHASE 1: MIDTRANS PAYMENT
+// ============================================================================
+export async function createMidtransTransaction(invoiceId: string, paymentMethod: string) {
+  return apiFetch("/midtrans/charge", { method: "POST", body: JSON.stringify({ invoice_id: invoiceId, payment_method: paymentMethod }) });
+}
+export async function getMidtransStatus(transactionId: string) { return apiFetch(`/midtrans/status/${transactionId}`); }
+
+// ============================================================================
+// PHASE 1: VENDOR ANALYTICS
+// ============================================================================
+export async function trackVendorView(vendorId: string, ip?: string, referrer?: string, city?: string) {
+  return apiFetch("/vendor-analytics/track-view", { method: "POST", body: JSON.stringify({ vendor_id: vendorId, ip_address: ip, referrer, city }) });
+}
+export async function getVendorStats(vendorId: string) { return apiFetch(`/vendor-analytics/stats/${vendorId}`); }
+export async function createStorefrontLead(data: any) {
+  return apiFetch("/vendor-analytics/lead", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ============================================================================
+// PHASE 2: WISHLIST & INSPIRATION
+// ============================================================================
+function getSessionId(): string {
+  if (typeof window !== "undefined") {
+    let sid = sessionStorage.getItem("eventos_session_id");
+    if (!sid) { sid = "sess_" + Math.random().toString(36).substring(2, 15); sessionStorage.setItem("eventos_session_id", sid); }
+    return sid;
+  }
+  return "anon";
+}
+export async function toggleWishlist(vendorId: string) {
+  return apiFetch("/wishlist/toggle", { method: "POST", body: JSON.stringify({ session_id: getSessionId(), vendor_id: vendorId }) });
+}
+export async function getWishlist() { return apiFetch(`/wishlist/session/${getSessionId()}`); }
+export async function getInspirationBoards() { return apiFetch(`/inspiration-boards?session_id=${getSessionId()}`); }
+export async function createInspirationBoard(title: string) {
+  return apiFetch("/inspiration-boards", { method: "POST", body: JSON.stringify({ session_id: getSessionId(), title }) });
+}
+export async function addInspirationItem(boardId: string, vendorId: string, imageUrl?: string, note?: string) {
+  return apiFetch(`/inspiration-boards/${boardId}/items`, { method: "POST", body: JSON.stringify({ vendor_id: vendorId, image_url: imageUrl, note }) });
+}
+
+// ============================================================================
+// PHASE 2: REVIEWS
+// ============================================================================
+export async function fetchVendorReviews(vendorId: string) { return publicFetch(`/reviews/${vendorId}`); }
+export async function getReviewAverage(vendorId: string) { return publicFetch(`/reviews/${vendorId}/average`); }
+export async function submitReview(data: any) {
+  return apiFetch("/reviews", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ============================================================================
+// PHASE 2: VIRTUAL EXPO
+// ============================================================================
+export async function fetchVirtualExpos(status?: string) {
+  const params = status ? `?status=${status}` : "";
+  return publicFetch(`/virtual-expos${params}`);
+}
+export async function fetchVirtualExpo(id: string) { return publicFetch(`/virtual-expos/${id}`); }
+export async function registerExpoBooth(data: any) {
+  return apiFetch("/virtual-expos/booths", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ============================================================================
+// PHASE 3: FORUM
+// ============================================================================
+export async function fetchForumTopics(category?: string, search?: string) {
+  const params = new URLSearchParams();
+  if (category && category !== "semua") params.set("category", category);
+  if (search) params.set("search", search);
+  return publicFetch(`/forum/topics${params.toString() ? "?" + params.toString() : ""}`);
+}
+export async function fetchForumTopic(id: string) { return publicFetch(`/forum/topics/${id}`); }
+export async function createForumTopic(data: any) {
+  return apiFetch("/forum/topics", { method: "POST", body: JSON.stringify(data) });
+}
+export async function replyToTopic(topicId: string, data: any) {
+  return apiFetch(`/forum/topics/${topicId}/replies`, { method: "POST", body: JSON.stringify(data) });
+}
+export async function fetchForumCategories() { return publicFetch("/forum/categories"); }
+
+// ============================================================================
+// PHASE 3: UGC GALLERY
+// ============================================================================
+export async function fetchUgcGallery(vendorId?: string) {
+  const path = vendorId ? `/ugc-gallery/vendor/${vendorId}` : "/ugc-gallery";
+  return publicFetch(path);
+}
+export async function submitUgcPhoto(data: any) {
+  return apiFetch("/ugc-gallery", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ============================================================================
+// PHASE 3: TENANT REGISTRATION
+// ============================================================================
+export async function registerTenant(data: any) {
+  return publicFetch("/tenant/register", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ============================================================================
+// PHASE 4: PREMIUM PROFILES
+// ============================================================================
+export async function fetchFeaturedVendors() { return publicFetch("/premium-profiles/featured"); }
+export async function getVendorBadge(vendorId: string) { return publicFetch(`/premium-profiles/vendor/${vendorId}/badge`); }
+
+// ============================================================================
+// PHASE 4: SPONSORED CONTENT
+// ============================================================================
+export async function fetchSponsoredContent() { return publicFetch("/sponsored-content"); }
+
+// ============================================================================
+// PHASE 4: API KEYS
+// ============================================================================
+export async function fetchApiKeys() { return apiFetch("/api-keys"); }
+export async function generateApiKey(name: string, permissions: string[]) {
+  return apiFetch("/api-keys", { method: "POST", body: JSON.stringify({ name, permissions }) });
+}
+export async function revokeApiKey(id: string) {
+  return apiFetch(`/api-keys/${id}/revoke`, { method: "POST" });
+}
+
+// ============================================================================
+// PHASE 4: AD CAMPAIGNS
+// ============================================================================
+export async function fetchAdCampaigns(vendorId: string) { return apiFetch(`/ad-campaigns/${vendorId}`); }
+export async function createAdCampaign(data: any) {
+  return apiFetch("/ad-campaigns", { method: "POST", body: JSON.stringify(data) });
+}
+export async function recordAdImpression(campaignId: string) {
+  return apiFetch(`/ad-campaigns/${campaignId}/impression`, { method: "POST" });
+}
+export async function recordAdClick(campaignId: string) {
+  return apiFetch(`/ad-campaigns/${campaignId}/click`, { method: "POST" });
 }

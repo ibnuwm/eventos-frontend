@@ -59,7 +59,7 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-        <a href="/"><Button variant="outline" size="sm" className="gap-2"><ArrowLeft className="w-4 h-4" /> Kembali</Button></a>
+        <a href="/dashboard"><Button variant="outline" size="sm" className="gap-2"><ArrowLeft className="w-4 h-4" /> Kembali</Button></a>
         <Card className="border-slate-800 bg-slate-900">
           <CardHeader className="pb-3 border-b border-slate-800">
             <CardTitle className="text-base font-bold text-white flex items-center gap-2">

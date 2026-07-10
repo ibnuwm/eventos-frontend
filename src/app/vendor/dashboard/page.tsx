@@ -49,7 +49,7 @@ function DashboardContent() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
-          <a href="/"><Button variant="outline" size="sm" className="gap-2"><ArrowLeft className="w-4 h-4" /> Beranda</Button></a>
+          <a href="/"><Button variant="outline" size="sm" className="gap-2"><ArrowLeft className="w-4 h-4" /> Beranda EventOS</Button></a>
           <Badge variant="info" className="text-[10px]">{vendor.category}</Badge>
         </div>
 

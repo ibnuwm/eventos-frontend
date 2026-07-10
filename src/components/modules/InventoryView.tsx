@@ -1,131 +1,224 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { useApp } from "@/lib/context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, Package, ShieldAlert, Plus } from "lucide-react";
+import {
+  AlertTriangle, Search, Package, CheckCircle2, XCircle,
+  AlertOctagon, Calendar, QrCode, Camera, Shield
+} from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel,
+  flexRender, SortingState, ColumnDef
+} from "@tanstack/react-table";
+import { InventoryItem } from "@/types";
 
 export function InventoryView() {
-  const { inventory, showToast } = useApp();
+  const { inventory, showToast, resolveConflict } = useApp();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+
+  const columns = useMemo<ColumnDef<InventoryItem>[]>(
+    () => [
+      { accessorKey: "name", header: "Nama Aset", cell: ({ row }) => <span className="font-bold text-foreground">{row.original.name}</span> },
+      { accessorKey: "category", header: "Kategori", cell: ({ row }) => <Badge variant="info" className="text-xs">{row.original.category}</Badge> },
+      { accessorKey: "totalStock", header: "Total Stok", cell: ({ row }) => <span className="font-semibold">{row.original.totalStock}</span> },
+      { accessorKey: "allocatedQty", header: "Dialokasikan", cell: ({ row }) => (
+        <span className={row.original.allocatedQty > row.original.totalStock ? "text-red-400 font-bold" : "font-semibold"}>
+          {row.original.allocatedQty}
+        </span>
+      )},
+      { accessorKey: "bookedForDate", header: "Tanggal", cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.bookedForDate)}</span> },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => row.original.hasConflict
+          ? <Badge variant="destructive" className="text-xs gap-1"><AlertOctagon className="w-3 h-3" /> Conflict</Badge>
+          : <Badge variant="success" className="text-xs gap-1"><CheckCircle2 className="w-3 h-3" /> Aman</Badge>,
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: inventory,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  const conflictCount = inventory.filter((i) => i.hasConflict).length;
 
   return (
-    <div className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            Modul 14: Asset & Inventory Conflict Detection Engine
+          <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+            <Package className="w-5 h-5 text-brand-400" />
+            Asset Conflict Detection
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Sistem otomatis mendeteksi bentrok jadwal peminjaman barang (double-booking) antar-proyek sebelum hari H.
+          <p className="text-xs text-muted-foreground mt-1">
+            Peringatan bentrok jadwal peminjaman aset sebelum hari H.
           </p>
         </div>
-        <Button
-          onClick={() => showToast("📦 Katalog barang gudang terbuka. Setiap penambahan item dicek silang dengan kalender booking proyek.")}
-          className="gap-1.5 font-semibold"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah Aset Gudang
-        </Button>
+        <div className="relative w-full sm:w-64">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder="Cari aset..." className="pl-9 bg-muted border-border/60" />
+        </div>
       </div>
 
-      {/* Red Alert Banner */}
-      {inventory.some((i) => i.hasConflict) && (
-        <div className="p-5 rounded-2xl bg-red-950/40 border-2 border-red-500/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl shadow-red-950/20 animate-pulse">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center flex-shrink-0 text-red-400">
-              <ShieldAlert className="w-7 h-7" />
-            </div>
-            <div>
-              <Badge variant="destructive" className="mb-1 uppercase font-extrabold tracking-wider">
-                Predictive Conflict Alert
-              </Badge>
-              <h3 className="text-base font-bold text-white">
-                Terdeteksi Bentrok Aset pada Tanggal 14 Agustus 2026!
-              </h3>
-              <p className="text-xs text-red-200 mt-0.5">
-                Alokasi pesanan untuk <strong className="text-white underline">Kursi Tiffany Emas Premium</strong> melampaui total stok gudang (550 dipesan vs 500 stok tersedia).
-              </p>
-            </div>
+      {/* Alert Banner */}
+      {conflictCount > 0 && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex items-center gap-3">
+          <AlertOctagon className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <div>
+            <div className="font-bold text-red-400 text-sm">{conflictCount} Bentrok Inventaris Terdeteksi!</div>
+            <div className="text-xs text-red-300/80 mt-0.5">Segera lakukan realokasi aset untuk menghindari kekurangan saat H-1 loading.</div>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="font-bold flex-shrink-0"
-            onClick={() => showToast("🚨 Mengirim permintaan sewa sub-kontrak ke Vendor Rekanan di Marketplace untuk menutupi defisit 50 kursi.")}
-          >
-            Sewa Sub-Kontrak Marketplace
+          <Button variant="outline" size="sm" className="ml-auto text-red-400 border-red-500/30 hover:bg-red-500/10 flex-shrink-0" onClick={() => {
+            const conflicted = inventory.find((i) => i.hasConflict);
+            if (conflicted) resolveConflict(conflicted.id);
+          }}>
+            Resolve
           </Button>
-        </div>
+        </motion.div>
       )}
 
-      {/* Inventory Table */}
-      <Card className="border-slate-800 bg-slate-900/80">
-        <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base font-bold text-white flex items-center gap-2">
-            <Package className="w-4 h-4 text-indigo-400" />
-            Daftar Inventaris Aset & Kalender Alokasi
-          </CardTitle>
-        </CardHeader>
+      {/* Conflict Detail Cards */}
+      {inventory.filter((i) => i.hasConflict).map((item) => (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="font-bold text-foreground flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+                {item.name}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Stok: <strong className="text-foreground">{item.totalStock}</strong> unit |
+                Dialokasikan: <strong className="text-red-400">{item.allocatedQty}</strong> unit |
+                Tanggal: <strong>{formatDate(item.bookedForDate)}</strong>
+              </div>
+              {item.conflictingProject && (
+                <div className="text-xs text-red-300 mt-1">
+                  Konflik: {item.conflictingProject}
+                </div>
+              )}
+            </div>
+            <Badge variant="destructive" className="flex-shrink-0">KEKURANGAN {item.allocatedQty - item.totalStock} UNIT</Badge>
+          </div>
+        </motion.div>
+      ))}
+
+      {/* Table */}
+      <Card className="glass-card border-border/60">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-950/40">
-                  <th className="p-4">Nama Aset / Barang</th>
-                  <th className="p-4">Kategori</th>
-                  <th className="p-4">Total Stok Gudang</th>
-                  <th className="p-4">Dipesan Untuk Tanggal</th>
-                  <th className="p-4">Total Di-booking</th>
-                  <th className="p-4">Status & Deteksi Bentrok</th>
-                </tr>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b border-border/60 text-xs font-semibold uppercase text-muted-foreground bg-muted/30">
+                    {headerGroup.headers.map((header) => (
+                      <th key={header.id} className="p-4 first:pl-6 last:pr-6 cursor-pointer hover:text-foreground" onClick={header.column.getToggleSortingHandler()}>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {inventory.map((item) => {
-                  const remaining = item.totalStock - item.allocatedQty;
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="p-4">
-                        <div className="font-bold text-white">{item.name}</div>
-                        {item.conflictingProject && (
-                          <div className="text-[11px] text-red-400 font-medium mt-0.5">
-                            💥 {item.conflictingProject}
-                          </div>
-                        )}
+              <tbody className="divide-y divide-border/40 text-sm">
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="hover:bg-muted/30 transition-colors">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="p-4 first:pl-6 last:pr-6">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
-                      <td className="p-4">
-                        <Badge variant="outline">{item.category}</Badge>
-                      </td>
-                      <td className="p-4 font-bold text-slate-200">{item.totalStock} Unit</td>
-                      <td className="p-4 text-slate-300 font-medium">{formatDate(item.bookedForDate)}</td>
-                      <td className="p-4">
-                        <span className={`font-extrabold ${item.hasConflict ? "text-red-400" : "text-emerald-400"}`}>
-                          {item.allocatedQty} Unit
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {item.hasConflict ? (
-                          <Badge variant="destructive" className="flex items-center gap-1 w-fit font-bold">
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                            Kurang {Math.abs(remaining)} Unit!
-                          </Badge>
-                        ) : (
-                          <Badge variant="success" className="flex items-center gap-1 w-fit font-bold">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Aman (Sisa {remaining} Unit)
-                          </Badge>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
-    </div>
+
+      {/* IoT QR Asset Tracking */}
+      <Card className="glass-card border-border/60 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="relative z-10">
+          <CardHeader className="pb-4 border-b border-border/60">
+            <CardTitle className="text-base font-bold text-foreground font-display flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-indigo-400" />
+              IoT QR Asset Tracking
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Scan barcode aset dari gudang hingga venue. AI Vision deteksi kerusakan & klaim deposit otomatis. Cukup scan via HP, semua data tercatat real-time.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 flex-1"
+                    disabled={scanning}
+                    onClick={() => {
+                      setScanning(true);
+                      setTimeout(() => {
+                        showToast("QR Code berhasil di-scan! Aset: Lampu Par LED 54W — Kondisi: Baik 100%.");
+                        setScanning(false);
+                      }, 2000);
+                    }}
+                  >
+                    <Camera className="w-4 h-4 text-indigo-400" />
+                    {scanning ? "Scanning..." : "Scan Barcode"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="gap-1.5 flex-1"
+                    disabled={claiming}
+                    onClick={() => {
+                      setClaiming(true);
+                      setTimeout(() => {
+                        showToast("AI mendeteksi lensa retak 85%! Deposit Rp 2.5 Juta dipotong otomatis.");
+                        setClaiming(false);
+                      }, 2000);
+                    }}
+                  >
+                    <Shield className="w-4 h-4" />
+                    {claiming ? "Memproses..." : "Simulasi Klaim"}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center text-center p-4">
+                <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center mb-2">
+                  <QrCode className="w-8 h-8 text-indigo-400" />
+                </div>
+                <div className="text-sm font-bold text-foreground">Pantau Aset Real-Time</div>
+                <div className="text-xs text-muted-foreground">Scan dari gudang → venue → kembali</div>
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+    </motion.div>
   );
 }
